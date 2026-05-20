@@ -1,0 +1,6 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,/chat [Scenario 2 - Name],CatchResponseError('Failed: 500'),8,2026-05-20T17:40:33Z,2026-05-20T17:40:42Z
+POST,/chat [Scenario 2 - Hello],CatchResponseError('Failed: 500'),64,2026-05-20T17:40:19Z,2026-05-20T17:41:11Z
+POST,/chat [Scenario 1],CatchResponseError('Status: 500'),124,2026-05-20T17:40:19Z,2026-05-20T17:41:10Z
+GET,/chat [Scenario 2 - History],CatchResponseError('Wrong message count'),8,2026-05-20T17:40:33Z,2026-05-20T17:40:42Z
+POST,/chat [Scenario 3 - Topic],CatchResponseError('Failed: 500'),39,2026-05-20T17:40:19Z,2026-05-20T17:41:10Z

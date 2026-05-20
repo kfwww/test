@@ -1,0 +1,86 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm
+    ports:
+      - "${VLLM_PORT}:${VLLM_PORT}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+    command: >
+      --model ${VLLM_MODEL}
+      --host 0.0.0.0
+      --port ${VLLM_PORT}
+      --max-model-len 8192
+      --gpu-memory-utilization 0.85
+      --max-num-seqs 32
+      --max-num-batched-tokens 8192
+      --dtype half
+      --reasoning-parser qwen3
+      --enable-prefix-caching
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - VLLM_LOGGING_LEVEL=${VLLM_LOGGING_LEVEL}
+    shm_size: '8gb'
+    ipc: host
+    cpuset: "0-7"
+    mem_limit: 12g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${VLLM_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:18
+    container_name: chat_postgres
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: postgres -c password_encryption=md5
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: chat_api
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - VLLM_HOST=vllm
+      - VLLM_PORT=${VLLM_PORT}
+      - VLLM_MODEL=${VLLM_MODEL}
+      - API_HOST=0.0.0.0
+      - API_PORT=${API_PORT}
+      - HF_TOKEN=${HF_TOKEN}
+      - VLLM_LOGGING_LEVEL=${VLLM_LOGGING_LEVEL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vllm:
+        condition: service_started
+    command: sh -c "python -m uvicorn app.main:app --host 0.0.0.0 --port ${API_PORT}"
+
+volumes:
+  postgres_data:
+  vllm_cache:

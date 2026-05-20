@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Load Test Bottleneck Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:Segoe UI,Arial,sans-serif; background:#0d1117; color:#c9d1d9; padding:30px; }
+h1 { color:#58a6ff; font-size:26px; margin-bottom:5px; }
+.subtitle { color:#8b949e; font-size:13px; margin-bottom:25px; }
+.bottleneck { background:#da3633; color:white; padding:18px 22px; border-radius:10px; margin:18px 0; font-size:16px; border-left:5px solid #ff7b72; }
+.bottleneck strong { font-size:20px; }
+h2 { color:#58a6ff; margin:25px 0 12px; font-size:18px; }
+h3 { color:#c9d1d9; margin:15px 0 8px; font-size:16px; }
+table { width:100%; border-collapse:collapse; margin:12px 0; background:#161b22; border-radius:8px; overflow:hidden; }
+th { background:#21262d; color:#58a6ff; padding:10px 14px; text-align:left; }
+td { padding:9px 14px; border-bottom:1px solid #21262d; }
+tr:hover { background:#1c2128; }
+.green { color:#3fb950; font-weight:bold; }
+.yellow { color:#d2991d; font-weight:bold; }
+.red { color:#f85149; font-weight:bold; }
+.chart-box { background:#161b22; border-radius:8px; padding:18px; margin:12px 0; }
+.metrics { display:flex; gap:12px; flex-wrap:wrap; margin:18px 0; }
+.metric { background:#161b22; border-radius:8px; padding:16px 20px; text-align:center; min-width:130px; flex:1; }
+.metric .val { font-size:28px; font-weight:bold; color:#58a6ff; }
+.metric .val.danger { color:#f85149; }
+.metric .lbl { font-size:11px; color:#8b949e; margin-top:4px; text-transform:uppercase; }
+.recs { background:#161b22; border-radius:8px; padding:18px 25px; margin:12px 0; }
+.recs li { margin:7px 0; }
+.evidence { background:#21262d; border-radius:8px; padding:12px 20px; margin:10px 0; font-family:monospace; font-size:13px; }
+.footer { margin-top:35px; padding-top:12px; border-top:1px solid #21262d; color:#484f58; font-size:11px; }
+a { color:#58a6ff; }
+</style>
+</head>
+<body>
+
+<h1>Load Test Report</h1>
+<p class="subtitle">Target: http://localhost:8000 | Date: 2026-05-20 20:41:14</p>
+
+<div class="bottleneck">
+Bottleneck at <strong>128 users</strong><br>
+<span style="opacity:0.85">Stop condition: error rate > 5.0% OR median latency > 20s</span>
+</div>
+
+<div class="metrics">
+
+<div class="metric"><div class="val danger">128</div><div class="lbl">Users</div></div>
+<div class="metric"><div class="val danger">77.88%</div><div class="lbl">Error Rate</div></div>
+<div class="metric"><div class="val danger">5000 ms</div><div class="lbl">Median Latency</div></div>
+<div class="metric"><div class="val">5.33</div><div class="lbl">RPS</div></div>
+</div>
+
+<h2>Performance Charts</h2>
+<div class="chart-box"><h3>Error Rate (%)</h3><canvas id="errorChart"></canvas></div>
+<div class="chart-box"><h3>Median Latency (ms)</h3><canvas id="latencyChart"></canvas></div>
+<div class="chart-box"><h3>Requests Per Second</h3><canvas id="rpsChart"></canvas></div>
+
+<h2>Results Table</h2>
+<table>
+<thead>
+<th>Level</th><th>Users</th><th>Requests</th><th>Failures</th><th>Error Rate</th><th>Avg Latency</th><th>Median Latency</th><th>RPS</th><th>Status</th>
+</thead>
+<tbody>
+<tr><td>1</td><td>1</td><td>9</td><td>0</td><td>0.0%</td><td>5326</td><td>2200</td><td>0.16</td><td><span class="green">Stable</span></td></tr>
+<tr><td>2</td><td>2</td><td>26</td><td>0</td><td>0.0%</td><td>3229</td><td>1800</td><td>0.45</td><td><span class="green">Stable</span></td></tr>
+<tr><td>3</td><td>4</td><td>45</td><td>0</td><td>0.0%</td><td>3796</td><td>2100</td><td>0.79</td><td><span class="green">Stable</span></td></tr>
+<tr><td>4</td><td>8</td><td>73</td><td>0</td><td>0.0%</td><td>4406</td><td>2700</td><td>1.25</td><td><span class="green">Stable</span></td></tr>
+<tr><td>5</td><td>16</td><td>164</td><td>0</td><td>0.0%</td><td>4051</td><td>2500</td><td>2.75</td><td><span class="green">Stable</span></td></tr>
+<tr><td>6</td><td>32</td><td>278</td><td>1</td><td>0.36%</td><td>4522</td><td>3500</td><td>4.72</td><td><span class="yellow">Warning</span></td></tr>
+<tr><td>7</td><td>64</td><td>239</td><td>1</td><td>0.42%</td><td>10372</td><td>9700</td><td>4.03</td><td><span class="yellow">Warning</span></td></tr>
+<tr><td>8</td><td>128</td><td>312</td><td>243</td><td>77.88%</td><td>6938</td><td>5000</td><td>5.33</td><td><span class="red">Critical</span></td></tr>
+
+</tbody>
+</table>
+
+<h2>Bottleneck Analysis</h2>
+<div class="recs">
+<h3>Component: API / LLM Timeout</h3>
+<p><strong>Cause:</strong> Requests timing out before completion</p>
+<div class="evidence"><strong>Evidence:</strong> Error rate 77.88% > 5.0%</div>
+</div>
+
+<h2>Recommendations</h2>
+<div class="recs">
+<ol>
+<li>Increase LLM timeout (currently 30s → 120s)</li>
+<li>Add semaphore for concurrent requests</li>
+<li>Enable continuous batching in vLLM</li>
+<li>Consider horizontal scaling of vLLM</li>
+</ol>
+</div>
+
+<h2>Per-Level Reports</h2>
+<ul>
+<li><a href='level_1_users_1.html'>Level 1: 1 users</a></li>
+<li><a href='level_2_users_2.html'>Level 2: 2 users</a></li>
+<li><a href='level_3_users_4.html'>Level 3: 4 users</a></li>
+<li><a href='level_4_users_8.html'>Level 4: 8 users</a></li>
+<li><a href='level_5_users_16.html'>Level 5: 16 users</a></li>
+<li><a href='level_6_users_32.html'>Level 6: 32 users</a></li>
+<li><a href='level_7_users_64.html'>Level 7: 64 users</a></li>
+<li><a href='level_8_users_128.html'>Level 8: 128 users</a></li>
+
+</ul>
+
+<div class="footer">Generated by run_load_test.py | 2026-05-20T20:41:14.793989</div>
+
+<script>
+
+new Chart(document.getElementById('errorChart'), {
+    type: 'bar',
+    data: {
+        labels: [1, 2, 4, 8, 16, 32, 64, 128],
+        datasets: [{
+            label: 'Error Rate (%)',
+            data: [0.0, 0.0, 0.0, 0.0, 0.0, 0.36, 0.42, 77.88],
+            backgroundColor: ctx => ctx.raw > 5 ? '#f85149' : ctx.raw > 0 ? '#d2991d' : '#3fb950',
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#c9d1d9' } } },
+        scales: {
+            y: { beginAtZero: true, max: 100, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            x: { ticks: { color: '#8b949e' }, grid: { display: false } }
+        }
+    }
+});
+
+new Chart(document.getElementById('latencyChart'), {
+    type: 'line',
+    data: {
+        labels: [1, 2, 4, 8, 16, 32, 64, 128],
+        datasets: [{
+            label: 'Median Latency (ms)',
+            data: [2200, 1800, 2100, 2700, 2500, 3500, 9700, 5000],
+            borderColor: '#58a6ff',
+            backgroundColor: 'rgba(88,166,255,0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#c9d1d9' } } },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            x: { ticks: { color: '#8b949e' }, grid: { display: false } }
+        }
+    }
+});
+
+new Chart(document.getElementById('rpsChart'), {
+    type: 'bar',
+    data: {
+        labels: [1, 2, 4, 8, 16, 32, 64, 128],
+        datasets: [{
+            label: 'RPS',
+            data: [0.16, 0.45, 0.79, 1.25, 2.75, 4.72, 4.03, 5.33],
+            backgroundColor: '#3fb950',
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#c9d1d9' } } },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+            x: { ticks: { color: '#8b949e' }, grid: { display: false } }
+        }
+    }
+});
+
+</script>
+</body>
+</html>
