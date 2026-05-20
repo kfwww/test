@@ -1,6 +1,6 @@
 # Тестовое задание
 
-[📊 Просмотр отчета](https://htmlpreview.github.io/?https://github.com/username/repo/blob/main/tests/load/Load%20Test%20Bottleneck%20Report.html)
+[📊 Просмотр отчета](https://htmlpreview.github.io/?https://github.com/kfwww/test/blob/master/tests/load/Load%20Test%20Bottleneck%20Report.html)
 
 ## Инструкция по запуску
 
